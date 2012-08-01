@@ -1,14 +1,27 @@
 #!/usr/bin/env ruby
+# coding: UTF-8
 
 require "open-uri"
 require "csv"
 
 require "nokogiri"
 
-html = open("http://en.wikipedia.org/wiki/2004_Summer_Olympics_medal_table")
+NBSP = "\xc2\xa0"
+
+def parse_record(string)
+  array = string.split("\n")
+  array.unshift(nil) unless array[0] =~ /\A\d/
+
+  array[1].sub!(/\A#{NBSP}/, "")
+
+  array[1..-1].to_csv
+end
+
+
+html = open("http://en.wikipedia.org/wiki/#{ARGV[0]}_Summer_Olympics_medal_table")
 
 doc = Nokogiri::HTML(html); nil
 data = doc.css("table.wikitable")
-          .first.css("tr").map { |e| e.content.split("\n").to_csv }.join
+          .first.css("tr").map { |e| parse_record(e.content) }
 
-puts data
+puts data[1..-2].join
