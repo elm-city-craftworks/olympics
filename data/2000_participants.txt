@@ -1,5 +1,5 @@
 Albania (4)
-Algeria
+Algeria (47)
 American Samoa (5)
 Andorra (5)
 Angola (30)
@@ -47,7 +47,7 @@ Costa Rica (7)
 Côte d'Ivoire (14)
 Croatia (88)
 Cuba (229)
-Cyprus
+Cyprus (22)
 Czech Republic (119)
 Denmark (97)
 Djibouti (2)
