@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+require "open-uri"
+require "csv"
+
+require "nokogiri"
+
+html = open("http://en.wikipedia.org/wiki/2004_Summer_Olympics_medal_table")
+
+doc = Nokogiri::HTML(html); nil
+data = doc.css("table.wikitable")
+          .first.css("tr").map { |e| e.content.split("\n").to_csv }.join
+
+puts data
