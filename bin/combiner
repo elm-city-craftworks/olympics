@@ -2,6 +2,9 @@
 
 require "csv"
 
+
+MAPPING = { "United Kingdom" => "Great Britain" }
+
 combined_data = {}
 
 CSV.foreach("data/#{ARGV[0]}_participants.csv") do |noc, participants|
@@ -17,11 +20,21 @@ CSV.foreach("data/medal_table_#{ARGV[0]}.csv") do |noc, gold, silver, bronze, to
   combined_data[noc][:total]  = total
 end
 
-p combined_data.size
+CSV.foreach("data/gdp.csv", :headers => true) do |row|
+  country = row[0].strip
+
+  if combined_data.key?(country)
+    combined_data[country][:gdp] = row[ARGV[0]] 
+  elsif combined_data.key?(MAPPING[country])
+    combined_data[MAPPING[country]][:gdp] = row[ARGV[0]]
+  else
+    p country
+  end
+end
 
 CSV.open("data/#{ARGV[0]}_combined.csv", "w") do |csv|
   combined_data.each do |noc, data|
-    info = data.values_at(:participants, :gold, :silver, :bronze, :total)
+    info = data.values_at(:participants, :gold, :silver, :bronze, :total, :gdp)
                .map { |e| e || 0 }
     csv << [noc] + info
   end
