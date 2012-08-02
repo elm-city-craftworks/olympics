@@ -1,9 +1,24 @@
 #!/usr/bin/env ruby
+# coding: UTF-8
 
 require "csv"
 
+MAPPING = { "Great Britain"          => "United Kingdom",
+            "Russia"                 => "Russian Federation",
+            "Serbia and Montenegro"  => "Serbia/Montenegro/Kosovo",
+            "Chinese Taipei"         => "Taiwan",
+            "DR Congo"               => "Zaire (Congo Kinshasa)",
+            "Congo"                  => "Congo 'Brazzaville'",
+            "Bosnia and Herzegovina" => "Bosnia",
+            "Haiti"                  => "Haïti" }
 
-MAPPING = { "United Kingdom" => "Great Britain" }
+#MAPPING = {  "United Kingdom"                         => "Great Britain",
+           # "Haïti"                                  => "Haiti",
+           # "Bosnia"                                 => "Bosnia and Herzegovina",
+#            "Russian Federation"                     => "Russia" }
+           # "Serbia/Montenegro/Kosovo"               => "Serbia and Montenegro",
+           # "Taiwan"                                 => "Chinese Taipei",
+           # "Indonesia (including Timor until 1999)" => "Indonesia" }.invert
 
 combined_data = {}
 
@@ -11,7 +26,6 @@ CSV.foreach("data/#{ARGV[0]}_participants.csv") do |noc, participants|
   combined_data[noc] = { :participants => participants }
 end
 
-p combined_data.size
 
 CSV.foreach("data/medal_table_#{ARGV[0]}.csv") do |noc, gold, silver, bronze, total| 
   combined_data[noc][:gold]   = gold
@@ -20,22 +34,62 @@ CSV.foreach("data/medal_table_#{ARGV[0]}.csv") do |noc, gold, silver, bronze, to
   combined_data[noc][:total]  = total
 end
 
-CSV.foreach("data/gdp.csv", :headers => true) do |row|
-  country = row[0].strip
+gdp_data = {}
 
-  if combined_data.key?(country)
-    combined_data[country][:gdp] = row[ARGV[0]] 
-  elsif combined_data.key?(MAPPING[country])
-    combined_data[MAPPING[country]][:gdp] = row[ARGV[0]]
+CSV.foreach("data/gdp.csv", :headers => true) do |row|
+  gdp_data[row[0].strip] = row[ARGV[0]]
+end
+
+combined_data.keys.each do |noc|
+  if gdp_data.key?(noc)
+    combined_data[noc][:gdp] = gdp_data[noc]
+  elsif gdp_data.key?(MAPPING[noc])
+    combined_data[noc][:gdp] = gdp_data[MAPPING[noc]]
   else
-    p country
+    p "GDP: #{noc}"
   end
 end
 
+population_data = {}
+
+CSV.foreach("data/population.csv", :headers => true) do |row|
+  population_data[row[0].strip] = row[ARGV[0]]
+end
+
+combined_data.keys.each do |noc|
+  if population_data.key?(noc)
+    combined_data[noc][:population] = population_data[noc]
+  elsif population_data.key?(MAPPING[noc])
+    combined_data[noc][:population] = population_data[MAPPING[noc]]
+  else
+    p "POP: #{noc}"
+  end
+end
+
+capita_data = {}
+
+CSV.foreach("data/gdp-capita.csv", :headers => true) do |row|
+  capita_data[row[0].strip] = row[ARGV[0]]
+end
+
+combined_data.keys.each do |noc|
+  if capita_data.key?(noc)
+    combined_data[noc][:capita] = capita_data[noc]
+  elsif population_data.key?(MAPPING[noc])
+    combined_data[noc][:capita] = capita_data[MAPPING[noc]]
+  else
+    p "CAPITA: #{noc}"
+  end
+end
+
+
+
+
+
 CSV.open("data/#{ARGV[0]}_combined.csv", "w") do |csv|
   combined_data.each do |noc, data|
-    info = data.values_at(:participants, :gold, :silver, :bronze, :total, :gdp)
+    info = data.values_at(:participants, :gold, :silver, :bronze, :total)
                .map { |e| e || 0 }
-    csv << [noc] + info
+    csv << [noc] + info + data.values_at(:gdp, :population, :capita)
   end
 end
