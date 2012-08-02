@@ -13,6 +13,9 @@ def parse_record(string)
   array.unshift(nil) unless array[0] =~ /\A\d/
 
   array[1].sub!(/\A#{NBSP}/, "")
+  array[1].sub!(/#{NBSP}\(.*\)/, "")
+
+  array[2..-1].each { |s| s.replace(s.sub(/\A(\d+)\[.*/) { $1 }) }
 
   array[1..-1].to_csv
 end
