@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+require "csv"
+
+combined_data = {}
+
+CSV.foreach("data/#{ARGV[0]}_participants.csv") do |noc, participants|
+  combined_data[noc] = { :participants => participants }
+end
+
+p combined_data.size
+
+CSV.foreach("data/medal_table_#{ARGV[0]}.csv") do |noc, gold, silver, bronze, total| 
+  combined_data[noc][:gold]   = gold
+  combined_data[noc][:silver] = silver
+  combined_data[noc][:bronze] = bronze
+  combined_data[noc][:total]  = total
+end
+
+p combined_data.size
+
+CSV.open("data/#{ARGV[0]}_combined.csv", "w") do |csv|
+  combined_data.each do |noc, data|
+    info = data.values_at(:participants, :gold, :silver, :bronze, :total)
+               .map { |e| e || 0 }
+    csv << [noc] + info
+  end
+end
