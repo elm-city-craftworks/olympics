@@ -10,15 +10,9 @@ MAPPING = { "Great Britain"          => "United Kingdom",
             "DR Congo"               => "Zaire (Congo Kinshasa)",
             "Congo"                  => "Congo 'Brazzaville'",
             "Bosnia and Herzegovina" => "Bosnia",
-            "Haiti"                  => "Haïti" }
-
-#MAPPING = {  "United Kingdom"                         => "Great Britain",
-           # "Haïti"                                  => "Haiti",
-           # "Bosnia"                                 => "Bosnia and Herzegovina",
-#            "Russian Federation"                     => "Russia" }
-           # "Serbia/Montenegro/Kosovo"               => "Serbia and Montenegro",
-           # "Taiwan"                                 => "Chinese Taipei",
-           # "Indonesia (including Timor until 1999)" => "Indonesia" }.invert
+            "Haiti"                  => "Haïti",
+            "Indonesia"              => "Indonesia (including Timor until 1999)" }
+            
 
 combined_data = {}
 
@@ -45,8 +39,6 @@ combined_data.keys.each do |noc|
     combined_data[noc][:gdp] = gdp_data[noc]
   elsif gdp_data.key?(MAPPING[noc])
     combined_data[noc][:gdp] = gdp_data[MAPPING[noc]]
-  else
-    p "GDP: #{noc}"
   end
 end
 
@@ -61,35 +53,23 @@ combined_data.keys.each do |noc|
     combined_data[noc][:population] = population_data[noc]
   elsif population_data.key?(MAPPING[noc])
     combined_data[noc][:population] = population_data[MAPPING[noc]]
-  else
-    p "POP: #{noc}"
   end
 end
-
-capita_data = {}
-
-CSV.foreach("data/gdp-capita.csv", :headers => true) do |row|
-  capita_data[row[0].strip] = row[ARGV[0]]
-end
-
-combined_data.keys.each do |noc|
-  if capita_data.key?(noc)
-    combined_data[noc][:capita] = capita_data[noc]
-  elsif population_data.key?(MAPPING[noc])
-    combined_data[noc][:capita] = capita_data[MAPPING[noc]]
-  else
-    p "CAPITA: #{noc}"
-  end
-end
-
-
-
-
 
 CSV.open("data/#{ARGV[0]}_combined.csv", "w") do |csv|
+  columns = ["noc", "participants", "gold", "silver", "bronze", "all_medals", "gdp", "population"]
+
+  csv << columns
+
   combined_data.each do |noc, data|
-    info = data.values_at(:participants, :gold, :silver, :bronze, :total)
-               .map { |e| e || 0 }
-    csv << [noc] + info + data.values_at(:gdp, :population, :capita)
+    game_stats = data.values_at(:participants, :gold, :silver, :bronze, :total)
+                     .map { |e| e || 0 }
+
+    demo_stats = data.values_at(:gdp, :population)
+    if demo_stats.any? { |e| e.nil? }
+      STDERR.puts(noc)
+    else
+      csv << [noc] + game_stats + demo_stats
+    end
   end
 end
