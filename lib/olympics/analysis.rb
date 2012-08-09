@@ -35,3 +35,12 @@ module Olympics
     end
   end
 end
+
+require "rsruby"
+
+
+
+
+Olympics::Analysis.r = RSRuby.instance
+
+p Olympics::Analysis.correlation(:x => [0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1], :y => (1..20).to_a)
